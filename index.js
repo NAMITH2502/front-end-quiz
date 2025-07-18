@@ -64,59 +64,37 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentQuestionIndex = 0;
   let score = 0;
   let selectedAnswer = null;
-  let askedQuestionIds = [];
+  let shuffledQuestions = [];
   let currentQuestion = null;
 
   totalQuestionsElement.textContent = QUIZ_LENGTH;
   totalQuestionsSummaryElement.textContent = QUIZ_LENGTH;
 
-  function getRandomQuestion() {
-    if (askedQuestionIds.length === questions.length) {
-      askedQuestionIds = [];
-    }
-
-    let availableQuestions = questions.filter(
-      (q) => !askedQuestionIds.includes(q.id)
-    );
-
-    if (availableQuestions.length === 0) {
-      availableQuestions = questions;
-      askedQuestionIds = [];
-    }
-
-    const randomIndex = Math.floor(Math.random() * availableQuestions.length);
-    const question = availableQuestions[randomIndex];
-
-    if (
-      askedQuestionIds.length > 0 &&
-      question.id === askedQuestionIds[askedQuestionIds.length - 1] &&
-      availableQuestions.length > 1
-    ) {
-      return getRandomQuestion();
-    }
-
-    if (askedQuestionIds.length >= QUIZ_LENGTH) {
-      askedQuestionIds.shift();
-    }
-
-    askedQuestionIds.push(question.id);
-
-    return question;
+  function startQuiz() {
+    shuffledQuestions = [...questions]
+      .sort(() => Math.random() - 0.5)
+      .slice(0, QUIZ_LENGTH);
+    currentQuestionIndex = 0;
+    score = 0;
+    selectedAnswer = null;
+    currentScoreElement.textContent = score;
+    quizSummaryContainer.style.display = "none";
+    quizQuestionContainer.style.display = "block";
+    displayQuestion();
   }
 
   function displayQuestion() {
-    if (currentQuestionIndex >= QUIZ_LENGTH) {
+    if (currentQuestionIndex >= shuffledQuestions.length) {
       showQuizSummary();
       return;
     }
 
-    currentQuestion = getRandomQuestion();
-    if (!currentQuestion) return;
-
+    currentQuestion = shuffledQuestions[currentQuestionIndex];
     questionTextElement.textContent = currentQuestion.qt;
     optionsContainer.innerHTML = "";
     feedbackElement.textContent = "";
     feedbackElement.className = "feedback";
+    submitAnswerBtn.style.display = "block";
     submitAnswerBtn.disabled = true;
     nextQuestionBtn.style.display = "none";
 
@@ -179,23 +157,12 @@ document.addEventListener("DOMContentLoaded", () => {
     finalScoreElement.textContent = score;
   }
 
-  function restartQuiz() {
-    currentQuestionIndex = 0;
-    score = 0;
-    selectedAnswer = null;
-    askedQuestionIds = [];
-    currentScoreElement.textContent = score;
-    quizSummaryContainer.style.display = "none";
-    quizQuestionContainer.style.display = "block";
-    displayQuestion();
-  }
-
   submitAnswerBtn.addEventListener("click", submitAnswer);
   nextQuestionBtn.addEventListener("click", () => {
     currentQuestionIndex++;
     displayQuestion();
   });
-  restartQuizBtn.addEventListener("click", restartQuiz);
+  restartQuizBtn.addEventListener("click", startQuiz);
 
-  displayQuestion();
+  startQuiz();
 });
